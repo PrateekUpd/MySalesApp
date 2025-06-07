@@ -122,7 +122,7 @@ export default function Home() {
       const otSales = totalSales - gemSales;
       const isGoalMet = totalSales >= parseFloat(goal);
 
-      const formattedOutput = `**${date}**\n\n*GOAL - ${goal} (11.5 X 13)*\nTotal - ${totalSales.toFixed(
+      const formattedOutput = `*${date}*\n\n*GOAL - ${goal}*\nTotal - ${totalSales.toFixed(
         2
       )}${isGoalMet ? "✅" : ""}\nOT - ${otSales.toFixed(
         2
