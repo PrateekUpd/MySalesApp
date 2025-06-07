@@ -102,6 +102,7 @@ export default function Home() {
             sales: salesAmount,
             gems,
             gemTotal: lineGemTotal,
+            gemSales: (lineGemTotal * 12) / 1000, // Add gemSales
           };
           salesDataArray.push(currentSalesperson);
           gemTotal += lineGemTotal;
@@ -111,6 +112,8 @@ export default function Home() {
           currentSalesperson.gems = [...currentSalesperson.gems, ...newGems];
           const additionalGemTotal = newGems.reduce((sum, val) => sum + val, 0);
           currentSalesperson.gemTotal += additionalGemTotal;
+          currentSalesperson.gemSales =
+            (currentSalesperson.gemTotal * 12) / 1000; // Update gemSales
           gemTotal += additionalGemTotal;
         }
       });
@@ -153,9 +156,9 @@ export default function Home() {
     const tableText = salesData
       .map(
         (item) =>
-          `${item.name}\t${item.sales.toFixed(2)}\t${
-            item.gems.join(", ") || "None"
-          }\t${item.gemTotal}`
+          `${item.name}\t${item.sales.toFixed(2)}\t${item.gemSales.toFixed(
+            2
+          )}\t${item.gemTotal}\t${item.gems.join(", ") || "None"}`
       )
       .join("\n");
     navigator.clipboard
@@ -166,7 +169,6 @@ export default function Home() {
 
   const handleClear = () => {
     setMessage("");
-    setGoal("");
     setOutput("");
     setSalesData([]);
     setErrors({ date: "", goal: "", message: "" });
@@ -190,14 +192,21 @@ export default function Home() {
   };
 
   const handleSort = (field) => {
-    const newSortOrder =
-      sortBy === field && sortOrder === "desc" ? "asc" : "desc";
+    const newSortOrder = sortBy === field && sortOrder === "desc" ? "asc" : "desc";
     setSortBy(field);
     setSortOrder(newSortOrder);
+  
     setSalesData(
-      [...salesData].sort((a, b) =>
-        newSortOrder === "desc" ? b[field] - a[field] : a[field] - b[field]
-      )
+      [...salesData].sort((a, b) => {
+        if (field === "name") {
+          return newSortOrder === "desc"
+            ? b.name.localeCompare(a.name)
+            : a.name.localeCompare(b.name);
+        } else if (["sales", "gemSales", "gemTotal"].includes(field)) {
+          return newSortOrder === "desc" ? b[field] - a[field] : a[field] - b[field];
+        }
+        return 0; // Fallback for unknown fields
+      })
     );
   };
 
@@ -219,12 +228,21 @@ export default function Home() {
       {
         label: "Sales Amount",
         data: salesData.map((item) => item.sales),
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
+        backgroundColor: "rgba(54, 162, 235, 0.6)", // Blue
         borderColor: "rgba(54, 162, 235, 1)",
         borderWidth: 1,
+        maxBarThickness: 40,
+      },
+      {
+        label: "Gem Sales",
+        data: salesData.map((item) => (item.gemTotal * 12) / 1000),
+        backgroundColor: "rgba(255, 99, 132, 0.6)", // Red
+        borderColor: "rgba(255, 99, 132, 1)",
+        borderWidth: 1,
+        maxBarThickness: 40,
       },
     ],
-  };
+  };    
 
   const pieChartData = {
     labels: ["Total", "OT", "GEM"],
@@ -259,7 +277,7 @@ export default function Home() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
-          Sales Summary Generator
+          💎 Sales Analyzer
         </h1>
         <form onSubmit={handleSubmit}>
           <motion.div className="mb-4" whileHover={{ scale: 1.02 }}>
@@ -401,13 +419,42 @@ export default function Home() {
                           data={barChartData}
                           options={{
                             responsive: true,
-                            plugins: { legend: { position: "top" } },
+                            plugins: {
+                              legend: { position: "top" },
+                              tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                  label: (context) => {
+                                    const label = context.dataset.label || "";
+                                    const value = context.parsed.y;
+                                    return `${label}: ${value.toFixed(2)}`;
+                                  },
+                                },
+                              },
+                            },
                             scales: {
                               y: {
                                 beginAtZero: true,
-                                title: { display: true, text: "Sales Amount" },
+                                title: { display: true, text: "Amount" },
+                                grid: { color: "rgba(0, 0, 0, 0.1)" },
+                                ticks: {
+                                  stepSize: 5, // Ticks every 5 units
+                                  callback: (value) => `${value}`,
+                                },
+                                suggestedMax: salesData.length
+                                  ? Math.ceil(
+                                      Math.max(
+                                        ...salesData.map((item) =>
+                                          Math.max(item.sales, (item.gemTotal * 12) / 1000)
+                                        )
+                                      ) / 5
+                                    ) * 5
+                                  : 50, // Fallback max if no data
                               },
-                              x: { title: { display: true, text: "Salesperson" } },
+                              x: {
+                                title: { display: true, text: "Salesperson" },
+                                grid: { display: false },
+                              },
                             },
                           }}
                         />
@@ -440,6 +487,15 @@ export default function Home() {
                       </h3>
                       <div className="mb-4 flex justify-end space-x-2">
                         <button
+                            onClick={() => handleSort("name")}
+                            className={`btn ${
+                              sortBy === "name" ? "btn-primary" : "btn-secondary"
+                            } text-sm`}
+                        >
+                          Sort by Name{" "}
+                          {sortBy === "name" && (sortOrder === "desc" ? "↓" : "↑")}
+                        </button>
+                        <button
                           onClick={() => handleSort("sales")}
                           className={`btn ${
                             sortBy === "sales" ? "btn-primary" : "btn-secondary"
@@ -449,14 +505,13 @@ export default function Home() {
                           {sortBy === "sales" && (sortOrder === "desc" ? "↓" : "↑")}
                         </button>
                         <button
-                          onClick={() => handleSort("gemTotal")}
+                          onClick={() => handleSort("gemSales")}
                           className={`btn ${
-                            sortBy === "gemTotal" ? "btn-primary" : "btn-secondary"
+                            sortBy === "gemSales" ? "btn-primary" : "btn-secondary"
                           } text-sm`}
                         >
-                          Sort by Gems{" "}
-                          {sortBy === "gemTotal" &&
-                            (sortOrder === "desc" ? "↓" : "↑")}
+                          Sort by Gem Sales{" "}
+                          {sortBy === "gemSales" && (sortOrder === "desc" ? "↓" : "↑")}
                         </button>
                       </div>
                       <div className="table-container">
@@ -465,8 +520,9 @@ export default function Home() {
                             <tr>
                               <th>Name</th>
                               <th>Sales</th>
-                              <th>Gem Amounts</th>
+                              <th>Gem Sales</th>
                               <th>Total Gems</th>
+                              <th>Gem Amounts</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -474,8 +530,9 @@ export default function Home() {
                               <tr key={index}>
                                 <td>{item.name}</td>
                                 <td>{item.sales.toFixed(2)}</td>
-                                <td>{item.gems.join(", ") || "None"}</td>
+                                <td>{item.gemSales.toFixed(2)}</td>
                                 <td>{item.gemTotal}</td>
+                                <td>{item.gems.join(", ") || "None"}</td>
                               </tr>
                             ))}
                           </tbody>
