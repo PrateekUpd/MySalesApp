@@ -1,17 +1,13 @@
 @import "tailwindcss";
-
 @import 'react-toastify/dist/ReactToastify.css';
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --primary-color: #3b82f6; /* Blue-500 */
+  --secondary-color: #10b981; /* Green-500 */
+  --accent-color: #8b5cf6; /* Purple-500 */
+  --font-sans: 'Inter', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,23 +19,61 @@
 
 body {
   @apply bg-gradient-to-br from-gray-100 to-gray-200;
-  /* background: var(--background); */
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
 
-/* Custom animations for the card */
+/* Card styling */
 .card {
-  @apply bg-white rounded-lg shadow-xl p-6;
+  @apply bg-white rounded-xl shadow-lg p-6 max-w-4xl w-full;
 }
 
-/* Input focus animation */
+/* Input and textarea focus */
 input:focus,
 textarea:focus {
-  @apply ring-2 ring-blue-300 transition-all duration-300;
+  @apply ring-2 ring-[var(--primary-color)] transition-all duration-300;
 }
 
 /* Output container */
 .output-container {
-  @apply bg-gray-50 rounded-md p-4 mt-6 border border-gray-200;
+  @apply bg-gray-50 rounded-xl p-6 mt-6 border border-gray-200;
+}
+
+/* Table styling */
+.table-container {
+  @apply overflow-x-auto;
+}
+
+.table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+.table th {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+/* Chart container */
+.chart-container {
+  @apply relative mb-8;
+}
+
+/* Button styling */
+.btn {
+  @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+}
+
+.btn-primary {
+  @apply bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/90;
+}
+
+.btn-secondary {
+  @apply bg-[var(--secondary-color)] text-white hover:bg-[var(--secondary-color)]/90;
+}
+
+.btn-accent {
+  @apply bg-[var(--accent-color)] text-white hover:bg-[var(--accent-color)]/90;
 }
